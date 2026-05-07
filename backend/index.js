@@ -1,10 +1,13 @@
 const express = require('express')
 const cors = require('cors')
 const UserRouters = require('./routers/UserRouters')
+const PetRouters = require('./routers/PetRouters')
 
 const app = express()
 
 app.use(express.json())
+
+app.use('/pets', PetRouters)
 
 app.use(cors({ credentials: true, origin: 'http://localhost:3000' }))
 
