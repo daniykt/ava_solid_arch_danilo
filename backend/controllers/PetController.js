@@ -63,4 +63,24 @@ module.exports = class PetController {
     const pets = await Pet.find({ 'adopter._id': req.user.id }).sort('-createdAt')
     return res.status(200).json(pets)
   }
+
+   static async removePetById(req, res) {
+    const { id } = req.params
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(422).json({ message: 'ID inválido.' })
+    }
+
+    const pet = await Pet.findById(id)
+    if (!pet) {
+      return res.status(404).json({ message: 'Pet não encontrado.' })
+    }
+
+    if (pet.user._id.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Ação não permitida para este usuário.' })
+    }
+
+    await Pet.findByIdAndDelete(id)
+    return res.status(200).json({ message: 'Pet removido com sucesso.' })
+  }
 }
