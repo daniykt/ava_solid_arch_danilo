@@ -64,6 +64,21 @@ module.exports = class PetController {
     return res.status(200).json(pets)
   }
 
+    static async getPetById(req, res) {
+    const { id } = req.params
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(422).json({ message: 'ID inválido.' })
+    }
+
+    const pet = await Pet.findById(id)
+    if (!pet) {
+      return res.status(404).json({ message: 'Pet não encontrado.' })
+    }
+
+    return res.status(200).json(pet)
+  }
+
    static async removePetById(req, res) {
     const { id } = req.params
 
@@ -115,5 +130,50 @@ module.exports = class PetController {
     await Pet.findByIdAndUpdate(id, updatedData)
     const updatedPet = await Pet.findById(id)
     return res.status(200).json({ message: 'Pet atualizado com sucesso!', data: updatedPet })
+  }
+    static async schedule(req, res) {
+    const { id } = req.params
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(422).json({ message: 'ID inválido.' })
+    }
+
+    const pet = await Pet.findById(id)
+    if (!pet) {
+      return res.status(404).json({ message: 'Pet não encontrado.' })
+    }
+
+    if (pet.user._id.toString() === req.user.id) {
+      return res.status(422).json({ message: 'Você não pode agendar uma visita para o seu próprio pet.' })
+    }
+
+    pet.adopter = {
+      _id: req.user.id,
+      name: req.user.name
+    }
+
+    await pet.save()
+    return res.status(200).json({ message: 'Visita agendada com sucesso!', data: pet })
+  }
+
+  static async concludeAdoption(req, res) {
+    const { id } = req.params
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(422).json({ message: 'ID inválido.' })
+    }
+
+    const pet = await Pet.findById(id)
+    if (!pet) {
+      return res.status(404).json({ message: 'Pet não encontrado.' })
+    }
+
+    if (pet.user._id.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Apenas o dono pode concluir a adoção.' })
+    }
+
+    pet.available = false
+    await pet.save()
+    return res.status(200).json({ message: 'Adoção concluída com sucesso!', data: pet })
   }
 }
